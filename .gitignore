@@ -1,5 +1,0 @@
-.venv
-uv.lock
-docker-compose.yaml
-pyproject.toml
-.env.env.idea/
