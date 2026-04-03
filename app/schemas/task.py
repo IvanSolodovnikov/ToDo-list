@@ -1,8 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
 
 class TaskSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     text: str
     done: bool = False

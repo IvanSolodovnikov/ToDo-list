@@ -27,11 +27,9 @@ class TaskService:
         task = await self.repository.get_by_id(task_id)
         if not task:
             raise TaskNotFoundError
-
         if payload.text:
             task.text = payload.text
-
-        if payload.done:
+        if payload.done != task.done:
             task.done = payload.done
 
         await self.db.commit()
@@ -42,5 +40,5 @@ class TaskService:
         task = await self.repository.get_by_id(task_id)
         if not task:
             raise TaskNotFoundError
-        await self.repository.delete_by_id(task_id)
+        await self.repository.delete_task(task)
         await self.db.commit()

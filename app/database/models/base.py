@@ -7,5 +7,5 @@ from uuid import uuid4
 class Base(DeclarativeBase):
     id: Mapped[UUID] = mapped_column(
         primary_key=True,
-        default=uuid4()
+        default=uuid4
     )

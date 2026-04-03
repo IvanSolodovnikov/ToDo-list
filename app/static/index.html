@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ToDo List</title>
+<style>
+ * {
+ box-sizing: border-box;
+ margin:0;
+ padding:0;
+ }
+        
+ body {
+ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+ background: #f5f5f5;
+ min-height:100vh;
+ padding:20px;
+ }
+        
+ .container {
+ max-width:600px;
+ margin:0 auto;
+ }
+        
+ h1 {
+ text-align: center;
+ color: #333;
+ margin-bottom:20px;
+ }
+        
+ .add-form {
+ display: flex;
+ gap:10px;
+ margin-bottom:30px;
+ }
+        
+ .add-form input {
+ flex:1;
+ padding:12px;
+ border:1px solid #ddd;
+ border-radius:8px;
+ font-size:16px;
+ }
+        
+ .add-form button {
+ padding:12px24px;
+ background: #4CAF50;
+ color: white;
+ border: none;
+ border-radius:8px;
+ font-size:16px;
+ cursor: pointer;
+ transition: background0.2s;
+ }
+        
+ .add-form button:hover {
+ background: #45a049;
+ }
+        
+ .task-list {
+ list-style: none;
+ }
+        
+ .task-item {
+ background: white;
+ padding:16px;
+ margin-bottom:10px;
+ border-radius:8px;
+ display: flex;
+ align-items: center;
+ gap:12px;
+ box-shadow:02px4px rgba(0,0,0,0.1);
+ }
+        
+ .task-item.done .task-text {
+ text-decoration: line-through;
+ color: #999;
+ }
+        
+ .task-checkbox {
+ width:20px;
+ height:20px;
+ cursor: pointer;
+ }
+        
+ .task-text {
+ flex:1;
+ font-size:16px;
+ color: #333;
+ cursor: pointer;
+ padding:4px8px;
+ border-radius:4px;
+ transition: background0.2s;
+ }
+        
+ .task-text:hover {
+ background: #f0f0f0;
+ }
+        
+ .task-text-input {
+ flex:1;
+ padding:4px8px;
+ font-size:16px;
+ border:2px solid #4CAF50;
+ border-radius:4px;
+ outline: none;
+ }
+        
+ .delete-btn {
+ padding:8px12px;
+ background: #f44336;
+ color: white;
+ border: none;
+ border-radius:6px;
+ cursor: pointer;
+ font-size:14px;
+ transition: background0.2s;
+ }
+        
+ .delete-btn:hover {
+ background: #da190b;
+ }
+        
+ .empty {
+ text-align: center;
+ color: #999;
+ padding:40px;
+ }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>📝 ToDo List</h1>
+        
+<form class="add-form" id="addForm">
+<input type="text" id="taskInput" placeholder="Введите новую задачу..." required>
+<button type="submit">Добавить</button>
+</form>
+        
+<ul class="task-list" id="taskList"></ul>
+</div>
+
+<script>
+ const API_URL = '/tasks';
+
+ // Загрузка задач
+ async function loadTasks() {
+ const response = await fetch(API_URL);
+ const tasks = await response.json();
+ renderTasks(tasks);
+ }
+
+ // Отрисовка задач
+ function renderTasks(tasks) {
+ const list = document.getElementById('taskList');
+            
+ if (tasks.length ===0) {
+ list.innerHTML = '<li class="empty">Задач пока нет</li>';
+ return;
+ }
+            
+ list.innerHTML = tasks.map(task => `
+<li class="task-item ${task.done ? 'done' : ''}" data-id="${task.id}">
+<input 
+ type="checkbox" 
+ class="task-checkbox" 
+ ${task.done ? 'checked' : ''}
+ onchange="toggleTask('${task.id}', this.checked)"
+ >
+<span class="task-text" onclick="editTask('${task.id}', '${escapeHtml(task.text)}')">${escapeHtml(task.text)}</span>
+<button class="delete-btn" onclick="deleteTask('${task.id}')">Удалить</button>
+</li>
+ `).join('');
+ }
+
+ // Экранирование HTML
+ function escapeHtml(text) {
+ const div = document.createElement('div');
+ div.textContent = text;
+ return div.innerHTML;
+ }
+
+ // Создание задачи
+ document.getElementById('addForm').addEventListener('submit', async (e) => {
+ e.preventDefault();
+ const input = document.getElementById('taskInput');
+ const text = input.value.trim();
+            
+ if (!text) return;
+            
+ await fetch(API_URL, {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ text })
+ });
+            
+ input.value = '';
+ loadTasks();
+ });
+
+ // Переключение статуса задачи
+ async function toggleTask(id, done) {
+ await fetch(`${API_URL}/${id}`, {
+ method: 'PATCH',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ done })
+ });
+ loadTasks();
+ }
+
+ // Редактирование текста задачи
+ function editTask(id, currentText) {
+ const item = document.querySelector(`li[data-id="${id}"]`);
+ const textSpan = item.querySelector('.task-text');
+ 
+ const input = document.createElement('input');
+ input.type = 'text';
+ input.className = 'task-text-input';
+ input.value = currentText;
+ 
+ const saveEdit = async () => {
+ const newText = input.value.trim();
+ if (newText && newText !== currentText) {
+ await fetch(`${API_URL}/${id}`, {
+ method: 'PATCH',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ text: newText })
+ });
+ loadTasks();
+ } else {
+ loadTasks();
+ }
+ };
+ 
+ input.addEventListener('blur', saveEdit);
+ input.addEventListener('keydown', (e) => {
+ if (e.key === 'Enter') {
+ input.blur();
+ } else if (e.key === 'Escape') {
+ loadTasks();
+ }
+ });
+ 
+ textSpan.replaceWith(input);
+ input.focus();
+ input.select();
+ }
+
+ // Удаление задачи
+ async function deleteTask(id) {
+ await fetch(`${API_URL}/${id}`, {
+ method: 'DELETE'
+ });
+ loadTasks();
+ }
+
+ // Загрузка при старте
+ loadTasks();
+</script>
+</body>
+</html>
