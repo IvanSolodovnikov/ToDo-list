@@ -29,9 +29,8 @@ class TaskService:
             raise TaskNotFoundError
         if payload.text:
             task.text = payload.text
-        if payload.done != task.done:
+        if payload.done is not None:
             task.done = payload.done
-
         await self.db.commit()
         await self.db.refresh(task)
         return TaskSchema.model_validate(task)
