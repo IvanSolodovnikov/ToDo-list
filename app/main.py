@@ -1,14 +1,22 @@
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, status, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from uuid import UUID
 
+from app.middleware import logs_middleware
 from app.database.db import create_tables
 from app.Exeptions import TaskNotFoundError
 from app.schemas.task import TaskSchema, TaskCreateSchema, TaskUpdateSchema
 from app.servicies.task import TaskService
 from app.dependicies import get_task_service
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
 
 
 @asynccontextmanager
@@ -18,6 +26,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.middleware("http")(logs_middleware)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
