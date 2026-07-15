@@ -22,7 +22,8 @@ async_session_maker = async_sessionmaker(
 )
 
 async def create_tables() -> None:
-    from app.models.base import Base
+    from app.database.models.base import Base
+    from app.database.models.task import TaskORM
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

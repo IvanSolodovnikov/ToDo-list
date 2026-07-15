@@ -10,17 +10,14 @@ from app.schemas.task import TaskSchema, TaskCreateSchema, TaskUpdateSchema
 from app.servicies.task import TaskService
 from app.dependicies import get_task_service
 
-from .middleware import logs_middleware
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await create_tables()
-    yield
+ await create_tables()
+ yield
 
 
 app = FastAPI(lifespan=lifespan)
-app.middleware("http")(logs_middleware)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 

@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.task import TaskORM
+from app.database.models.task import TaskORM
 
 
 class TaskRepository:
